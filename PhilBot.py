@@ -7,7 +7,7 @@ import logging
 from PIL import Image
 
 BOT_PREFIX = ("!")
-TOKEN = 'NzAyNzMzMzQ3MTUxMDIwMTAz.XqEWWA.TCaTs2VVA-oNQIt2tA3s9e-Hb-8'
+TOKEN = ''
 
 client = discord.Client()
 
