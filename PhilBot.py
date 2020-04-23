@@ -2,7 +2,7 @@ import io
 import discord
 import aiohttp
 import discord
-import logging
+import os.path
 
 from PIL import Image
 
@@ -12,15 +12,63 @@ TOKEN = ''
 client = discord.Client()
 
 COORDS = [(631, 551), (990, 550), (634, 308), (980, 339)]
-COEFFS = [  0.6374168620866798, 0.007869343976259636, -1626.1841940303493, -0.054752838176018385, 
-            0.6111123228682619, -614.03718415929, -8.243880118502314e-05, 3.514468461961497e-05]
+COEFFS = [  0.6547747129877984, 0.008083638431858402, -1670.4677146851654, -0.05607509889913542,
+            0.6258704586809742, -628.8659542867306, -7.95610829238863e-05, 4.137514033619954e-05]
+
+philbank = []
+
+class Register:
+    def __init__(self, user_id, balance):
+        self.user_id = user_id
+        self.balance = balance
+
+    def set_id(self, user_id):
+        self.user_id = user_id
+
+    def set_balance(self, balance):
+        self.balance = balance
+
+    def get_id(self):
+        return self.user_id
+
+    def get_balance(self):
+        return self.balance
+
+def get_user_register(user_id):
+    for register in philbank:
+        if register.get_id() == user_id:
+            return f"User: {get_name_from_users(register.get_id())}, Balance: {register.get_balance()}"
+    return "Philbank not found"
+
+def add_philcoin(user_id, amount):
+    for register in philbank:
+        if user_id == register.get_id():
+            register.set_balance(register.get_balance()+int(amount))
+            save_philbank()
+            return
+    new_register = Register(user_id, amount)
+    philbank.append(new_register)
+    save_philbank()
+
+def get_philcoin_balance(user_id):
+    for register in philbank:
+        if user_id == register.get_id():
+            return register.get_balance()
+    return -1
 
 
-logger = logging.getLogger('discord')
-logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
-handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-logger.addHandler(handler)
+def get_name_from_users(user_id):
+    for user in client.users:
+        if user.id == user_id:
+            return user.name
+    return None
+
+
+def save_philbank():
+    with open('philbank.txt', 'w') as f:
+        for register in philbank:
+            f.write("{'Name': '" + get_name_from_users(register.get_id()) + "','UserId': " + str(register.get_id())
+                    + ",'Balance': " + str(register.get_balance()) + "}\n")
 
 def process_command(command):
     if command.author.id == client.user.id:
@@ -77,5 +125,13 @@ async def on_reaction_add(reaction, user):
 @client.event
 async def on_ready():
     print('Phil Bot running')
+
+    if not os.path.exists('philbank.txt'):	
+        open('philbank.txt', 'w')	
+
+    with open("philbank.txt", "r") as f:	
+        for line in f:	
+            new_register = eval(line)	
+            philbank.append(Register(new_register.get('UserId'), new_register.get('Balance')))
 
 client.run(TOKEN)
